@@ -2,9 +2,7 @@
 Day 1 - API Data Analysis Using Python Structures
 Squad Python Specialization - Data Science, AI & Analytics
 """
-import json
 from pathlib import Path
-import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
@@ -73,10 +71,12 @@ def unique_cities(customers: list[dict]) -> set[str]:
 cities = unique_cities(customers)
 print(f"Customers retrieved : {len(customers)}")
 print(f"Unique cities       : {len(cities)}")
-if len(cities) == len(customers):
+if customers and len(cities) == len(customers):
     print("Marketing insight   : Every customer is in a different city, so city is a poor segment for this sample.")
-else:
+elif customers:
     print("Marketing insight   : Repeated cities may be useful for geographic customer segmentation.")
+else:
+    print("Marketing insight   : No customers were retrieved, so geographic segmentation cannot be evaluated.")
 
 
 
@@ -99,8 +99,11 @@ def email_domain_counts(customers: list[dict]) -> dict[str, int]:
 distinct_count = city_counts(customers)
 distinct_email = email_domain_counts(customers)
 
-most_common_city = max(distinct_count, key=distinct_count.get)
-print(f"Most common city    : {most_common_city} ({distinct_count[most_common_city]})")
+if distinct_count:
+    most_common_city = max(distinct_count, key=distinct_count.get)
+    print(f"Most common city    : {most_common_city} ({distinct_count[most_common_city]})")
+else:
+    print("Most common city    : none")
 print(f"Email domains       : {distinct_email}")
 
 
@@ -117,7 +120,11 @@ print_sorted(distinct_email, "Customers by email domain")
 
 
 def to_dataframe(rows: list[dict]) -> pd.DataFrame:
-    return pd.DataFrame(rows)
+    columns = [
+        "customer_id", "name", "username", "email", "email_domain", "phone",
+        "city", "zipcode", "latitude", "longitude", "company", "website",
+    ]
+    return pd.DataFrame(rows, columns=columns)
 
 
 df = to_dataframe(result_x)
@@ -166,6 +173,10 @@ print(f"Wrote {len(df)} rows to customers.csv and {len(city_df)} rows to city_co
 def plot_distribution(counts: dict[str, int], path: str,
                       title: str = "Distribution", xlabel: str = "Customers") -> None:
     """Save a horizontal bar chart of counts, most common first."""
+    if not counts:
+        print(f"No data available for chart: {path}")
+        return
+
     # same ordering as print_sorted: count desc, then name A-Z
     items = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
     labels = [name for name, _ in items]
@@ -193,12 +204,12 @@ plot_distribution(
     "output/customer_distribution.png",
     title="Customers by city",
 )
-print("Chart saved to: output/customer_distribution.png")
+if customers:
+    print("Chart saved to: output/customer_distribution.png")
 
 # Chart 2: customers by email top-level domain
 df["email_tld"] = df["email_domain"].str.rsplit(".", n=1).str[-1]
 tld_counts = df["email_tld"].value_counts().to_dict()
-print(tld_counts)                          # check that it actually varies
 
 plot_distribution(
     tld_counts,

@@ -31,8 +31,27 @@ city name.
 - `output/customers.csv` contains the requested flat customer attributes.
 - `output/city_counts.csv` contains `city` and `customer_count`.
 - `output/customer_distribution.png` charts customer counts by city.
-- `output/email_domain_distribution.png` charts customer counts by email domain.
+- `output/email_tld_distribution.png` charts customer counts by email top-level domain.
 
 Because each city appears once in this sample, the email-domain chart is more
 useful: it groups customers into repeated categories and reveals a distribution
 that city counts cannot show here.
+
+## Run
+
+From this directory, install the dependencies and run the script:
+
+```bash
+python -m pip install -e .
+python analysis.py
+```
+
+The script requires network access to `https://jsonplaceholder.typicode.com/users`.
+If the request fails, it prints an error and continues with empty results; the
+CSV files are still written and empty charts are skipped safely.
+
+## Assumptions
+
+- Each customer has the JSONPlaceholder fields used by `extract_attributes`.
+- Email domains are the text after `@`, converted to lowercase.
+- Latitude and longitude are converted from API strings to floats.
