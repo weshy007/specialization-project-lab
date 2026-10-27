@@ -15,10 +15,10 @@ API_URL = "https://jsonplaceholder.typicode.com/users"
 def get_customers(url: str = API_URL) -> list[dict]:
     """Fetch the customer list. Report failures clearly instead of crashing."""
     try:
-        response = requests.get(url,timeout=10)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         return response.json()
-    except requests.request.exceptions.RequestException as error:
+    except requests.exceptions.RequestException as error:
         print(f"Error fetching customers: {error}")
         return []
 
@@ -44,30 +44,26 @@ if customers:
 
 def extract_attributes(customers: list[dict]) -> list[dict]:
     """Return one flat dict per customer with the attributes listed in the task."""
-    rows = [
-        # creating an empty list , inisde it will have many dictionaries, each dictinary has individual attributes from the jason file(a nested dictinary)
+    return [
+        {
+            "customer_id": customer["id"],
+            "name": customer["name"],
+            "username": customer["username"],
+            "email": customer["email"],
+            "email_domain": customer["email"].split("@")[-1].lower(),
+            "phone": customer["phone"],
+            "city": customer["address"]["city"],
+            "zipcode": customer["address"]["zipcode"],
+            "latitude": float(customer["address"]["geo"]["lat"]),
+            "longitude": float(customer["address"]["geo"]["lng"]),
+            "company": customer["company"]["name"],
+            "website": customer["website"],
+        }
+        for customer in customers
     ]
-    # customers is the whole json file with (eg 500 customers), c stands for one out of the 500 customers.
-    for c in customers:
-        rows.append({
-            'id': c['id'],
-            'name': c['name'],
-            "username": c["username"],
-            "email": c["email"],
-            "email_domain": c["email"].split("@")[-1].lower(),
-            "phone": c["phone"],
-            "city": c["address"]["city"],
-            "zipcode": c["address"]["zipcode"],
-            "latitude": float(c["address"]["geo"]["lat"]),
-            "longitude": float(c["address"]["geo"]["lng"]),
-            "company": c["company"]["name"],
-            "website": c["website"],
-        })
-    return rows
 
 
 result_x = extract_attributes(customers)
-print(result_x)
 
 
 def unique_cities(customers: list[dict]) -> set[str]:
@@ -75,7 +71,12 @@ def unique_cities(customers: list[dict]) -> set[str]:
     return {c["address"]["city"] for c in customers}
 
 cities = unique_cities(customers)
-print(cities)
+print(f"Customers retrieved : {len(customers)}")
+print(f"Unique cities       : {len(cities)}")
+if len(cities) == len(customers):
+    print("Marketing insight   : Every customer is in a different city, so city is a poor segment for this sample.")
+else:
+    print("Marketing insight   : Repeated cities may be useful for geographic customer segmentation.")
 
 
 
@@ -95,30 +96,36 @@ def email_domain_counts(customers: list[dict]) -> dict[str, int]:
     domains = [c["email"].split("@")[-1].lower() for c in customers]
     return {d: domains.count(d) for d in set(domains)}
       
-distict_count = city_counts(customers)
+distinct_count = city_counts(customers)
 distinct_email = email_domain_counts(customers)
-# print_sorted(city_counts(customers), "Customers by city")
-# print_sorted(email_domain_counts(customers), "Customers by email domain")
-print(distict_count, "Distict customer Names")
-print(distinct_email, "distict emails")
+
+most_common_city = max(distinct_count, key=distinct_count.get)
+print(f"Most common city    : {most_common_city} ({distinct_count[most_common_city]})")
+print(f"Email domains       : {distinct_email}")
 
 
 def print_sorted(counts: dict[str, int], title: str) -> None:
     """Print counts from most to least common, ties listed alphabetically."""
     print(title)
     for name, n in sorted(counts.items(), key=lambda item: (-item[1], item[0])):
-        print(f"  {name}: {n}")
+        print(f"{name}: {n}")
 
 
-distinct_email = email_domain_counts(customers)
-print(distinct_email)
+
+print_sorted(distinct_count, "Customers by city")
+print_sorted(distinct_email, "Customers by email domain")
+
 
 def to_dataframe(rows: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
-pd.set_option("display.max_columns", None)
+
+
 df = to_dataframe(result_x)
-print(df.shape)
-print(df.dtypes)
+pd.set_option("display.max_columns", None)
+print("DataFrame shape:", df.shape)
+print("DataFrame dtypes:\n", df.dtypes)
+
+
  # 2. Confirm pandas agrees with the hand-written counts
 hand_cities = city_counts(customers)
 hand_domains = email_domain_counts(customers)
@@ -148,8 +155,8 @@ df.to_csv(out_dir / "customers.csv", index=False)
 city_df = (
     df.groupby("city")
       .size()
-      .reset_index(name="count")
-      .sort_values(["count", "city"], ascending=[False, True])
+    .reset_index(name="customer_count")
+    .sort_values(["customer_count", "city"], ascending=[False, True])
 )
 city_df.to_csv(out_dir / "city_counts.csv", index=False)
 
@@ -186,6 +193,7 @@ plot_distribution(
     "output/customer_distribution.png",
     title="Customers by city",
 )
+print("Chart saved to: output/customer_distribution.png")
 
 # Chart 2: customers by email top-level domain
 df["email_tld"] = df["email_domain"].str.rsplit(".", n=1).str[-1]
