@@ -1,0 +1,21 @@
+[project]
+name = "user-analysis-day1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Weshy Joe", email = "josephwaweru96@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "pandas>=3.1.0",
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+user-analysis-day1 = "user_analysis_day1:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
