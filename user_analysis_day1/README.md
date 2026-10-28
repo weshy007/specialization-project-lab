@@ -31,7 +31,7 @@ city name.
 - `output/customers.csv` contains the requested flat customer attributes.
 - `output/city_counts.csv` contains `city` and `customer_count`.
 - `output/customer_distribution.png` charts customer counts by city.
-- `output/email_tld_distribution.png` charts customer counts by email top-level domain.
+- `output/email_domain_distribution.png` charts customer counts by email domain.
 
 Because each city appears once in this sample, the email-domain chart is more
 useful: it groups customers into repeated categories and reveals a distribution

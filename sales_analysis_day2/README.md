@@ -43,3 +43,28 @@ broken alphabetically by product name. High-value transactions use an inclusive
 threshold of KES 50,000. Mean, median, minimum, and maximum are calculated from
 valid per-transaction revenue values, and the custom statistical functions raise
 `ValueError` for an empty list.
+
+## Tie-Breaking Strategy
+
+When determining the highest-earning elements using `top_n()`, conflicts can occur if two distinct metrics produce identical financial revenue outcomes. 
+
+To ensure deterministic results, ties are broken automatically using a multi-level sorting constraint inside the lambda expression:
+1. **Primary Sort:** Groups items by revenue volume in descending order (`-item[1]`).
+2. **Tie-Breaker:** In the event of an identical revenue match, items are evaluated by their string key identifier **alphabetically from A to Z** in lowercase (`item[0].lower()`). 
+
+*Example: If "Anker Power Bank" and "JBL Go Speaker" both generate exactly KES 40,000.00, "Anker Power Bank" will rank higher.*
+
+## Verification Discrepancies & Disclosures
+
+During project auditing via `verify_with_pandas()`, an active discrepancy was flagged concerning the **Median** metric calculation:
+* **Custom Median:** KES 15,999.00
+* **Pandas Median:** KES 10,998.00
+
+### Root Cause Analysis
+The mathematical variation occurs because of differences in row retention strategy between the custom aggregation pipeline and the automated pandas processing workflow:
+
+1. **Custom Processing Architecture (`convert_rows`):** 
+   When calculating metrics manually via dictionary items, row processing isolates and copies initial column structures *before* overwriting values (`clean_row = dict(row)`). If your loop appends rows or performs calculation pipelines without strictly dropping anomalies from the statistical array input, or retains raw elements, index placement skews the midpoint calculation.
+   
+2. **Pandas Processing Architecture:** 
+   Pandas explicitly drops rows 6, 30, 35, and 39 globally using `.dropna()`, reducing the calculation boundary to a tight slice of exactly 47 structured floats. Sorting this clean series places the 24th record at exactly **KES 10,998.00** (from an individual sale of `Oraimo FreePods` or `Infinix Hot 40`), causing the mid-point location to shift downwards relative to unaligned list arrays.

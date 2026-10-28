@@ -48,7 +48,7 @@ def extract_attributes(customers: list[dict]) -> list[dict]:
             "name": customer["name"],
             "username": customer["username"],
             "email": customer["email"],
-            "email_domain": customer["email"].split("@")[-1].lower(),
+            "email_domain": customer["email"].rsplit(".", 1)[-1].lower(),
             "phone": customer["phone"],
             "city": customer["address"]["city"],
             "zipcode": customer["address"]["zipcode"],
@@ -92,8 +92,8 @@ def city_counts(customers: list[dict]) -> dict[str, int]:
 
 
 def email_domain_counts(customers: list[dict]) -> dict[str, int]:
-    """Return {email domain: number of customers} using a dict comprehension."""
-    domains = [c["email"].split("@")[-1].lower() for c in customers]
+    """Return {email TLD: number of customers} using a dict comprehension."""
+    domains = [c["email"].rsplit(".", 1)[-1].lower() for c in customers]
     return {d: domains.count(d) for d in set(domains)}
       
 distinct_count = city_counts(customers)
@@ -208,11 +208,8 @@ if customers:
     print("Chart saved to: output/customer_distribution.png")
 
 # Chart 2: customers by email top-level domain
-df["email_tld"] = df["email_domain"].str.rsplit(".", n=1).str[-1]
-tld_counts = df["email_tld"].value_counts().to_dict()
-
 plot_distribution(
-    tld_counts,
-    "output/email_tld_distribution.png",
-    title="Customers by email top-level domain",
+    distinct_email,
+    "output/email_domain_distribution.png",
+    title="Customers by email domain",
 )
