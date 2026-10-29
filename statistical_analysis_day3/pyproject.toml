@@ -1,0 +1,21 @@
+[project]
+name = "statistical-analysis-day3"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Weshy Joe", email = "josephwaweru96@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "ipyn",
+    "ipynb",
+    "pandas>=3.1.0",
+]
+
+[project.scripts]
+statistical-analysis-day3 = "statistical_analysis_day3:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
